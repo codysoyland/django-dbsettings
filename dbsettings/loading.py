@@ -9,33 +9,16 @@ from dbsettings.models import Setting
 __all__ = ['get_all_settings', 'get_setting', 'get_setting_storage',
     'register_setting', 'set_setting_value']
 
-class SettingDict(SortedDict):
-    "Sorted dict that has a bit more list-type functionality"
-    def insert(self, key, index, value):
-        if key not in self.keys():
-            self.keyOrder.insert(index, key)
-            self[key] = value
-
-    def __iter__(self):
-        for k in self.keyOrder:
-            yield self[k]
-
-    def __contains__(self, value):
-        for v in self.values():
-            if v == value:
-                return True
-        return False
-
-_settings = SettingDict()
+_settings = SortedDict()
 
 def _get_cache_key(module_name, class_name, attribute_name):
     return '.'.join(['dbsettings', module_name, class_name, attribute_name])
 
 def get_all_settings():
-    return list(_settings)
+    return _settings.values()
 
 def get_app_settings(app_label):
-    return [p for p in _settings if app_label == p.module_name.split('.')[-2]]
+    return [p for p in _settings.values() if app_label == p.module_name.split('.')[-2]]
 
 def get_setting(module_name, class_name, attribute_name):
     return _settings[module_name, class_name, attribute_name]
@@ -60,8 +43,8 @@ def get_setting_storage(module_name, class_name, attribute_name):
     return storage
 
 def register_setting(setting):
-    if setting not in _settings:
-        _settings.insert(setting.key, bisect(list(_settings), setting), setting)
+    if setting not in _settings.values():
+        _settings.insert(bisect(list(_settings), setting), setting.key, setting)
     else:
         _settings[setting.key] = setting
 
